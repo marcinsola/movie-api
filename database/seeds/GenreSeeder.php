@@ -11,6 +11,6 @@ class GenreSeeder extends Seeder
      */
     public function run()
     {
-        //
+        factory(\App\Genre::class, 50)->create();
     }
 }
