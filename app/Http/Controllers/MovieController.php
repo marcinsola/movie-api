@@ -9,7 +9,7 @@ class MovieController extends Controller
 {
     public function index()
     {
-        //
+        return Movie::all()->toJson();
     }
 
     public function store(Request $request)
