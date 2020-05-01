@@ -18,4 +18,4 @@ Route::get('/', function () {
 });
 
 Route::apiResource('movies', 'MovieController');
-
+Route::get('movies/title/{title}', 'MovieController@findByTitle');

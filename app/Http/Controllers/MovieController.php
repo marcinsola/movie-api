@@ -12,6 +12,7 @@ class MovieController extends Controller
 {
     public function index()
     {
+
         return response()->json(Movie::all()->load('genres'));
     }
 
@@ -58,14 +59,10 @@ class MovieController extends Controller
         return response()->json(null, 204);
     }
 
-    public function findByTitle(Request $request)
+    public function findByTitle(Request $request, string $title)
     {
-        try {
-            $movie = Movie::where('title', 'LIKE', $request->get('title'))->with('genres')->findOrFail();
+            $movie = Movie::where('title', 'LIKE', '%' . $title . '%')->with('genres')->get();
 
             return response()->json($movie, 200);
-        } catch (ModelNotFoundException $e) {
-            return response()->json(null, 404);
-        }
     }
 }
