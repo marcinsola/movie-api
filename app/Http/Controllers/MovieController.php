@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Genre;
 use App\Movie;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use DB;
 
 class MovieController extends Controller
 {
@@ -14,14 +17,38 @@ class MovieController extends Controller
 
     public function store(Request $request)
     {
-        return response()->json(Movie::create($request->all()), 201);
+        DB::beginTransaction();
+        try {
+            $movie = Movie::create($request->all());
+
+            $genres = Genre::whereIn('id', $request->get('genres'))->pluck('id')->toArray();
+            $movie->genres()->syncWithoutDetaching(array_values($genres));
+            DB::commit();
+
+            return response()->json($movie->load('genres'), 201);
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return response()->json(null, 500);
+        }
     }
 
     public function update(Request $request, Movie $movie)
     {
-        $movie->update($request->all());
+        DB::beginTransaction();
+        try {
+            $movie->update($request->all());
 
-        return response()->json($movie, 200);
+            $genres = Genre::whereIn('id', $request->get('genres'))->pluck('id')->toArray();
+            $movie->genres()->syncWithoutDetaching($genres);
+            DB:commit();
+
+            return response()->json($movie->load('genres'), 200);
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            return response()->json(null, 500);
+        }
     }
 
     public function destroy(Movie $movie)
@@ -29,5 +56,16 @@ class MovieController extends Controller
         $movie->delete();
 
         return response()->json(null, 204);
+    }
+
+    public function findByTitle(Request $request)
+    {
+        try {
+            $movie = Movie::where('title', 'LIKE', $request->get('title'))->with('genres')->findOrFail();
+
+            return response()->json($movie, 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(null, 404);
+        }
     }
 }

@@ -17,5 +17,5 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::resource('movies', 'MovieController');
+Route::apiResource('movies', 'MovieController');
 
