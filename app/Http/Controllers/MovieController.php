@@ -40,7 +40,7 @@ class MovieController extends Controller
             $movie->update($request->all());
 
             $genres = Genre::whereIn('id', $request->get('genres'))->pluck('id')->toArray();
-            $movie->genres()->syncWithoutDetaching($genres);
+            $movie->genres()->sync($genres);
             DB:commit();
 
             return response()->json($movie->load('genres'), 200);
