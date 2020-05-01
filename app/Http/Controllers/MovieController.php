@@ -9,14 +9,12 @@ class MovieController extends Controller
 {
     public function index()
     {
-        return Movie::all()->load('genres')->toJson();
+        return response()->json(Movie::all()->load('genres'));
     }
 
     public function store(Request $request)
     {
-        $movie = Movie::create($request->all());
-
-        return response()->json($movie, 201);
+        return response()->json(Movie::create($request->all()), 201);
     }
 
     public function update(Request $request, Movie $movie)
