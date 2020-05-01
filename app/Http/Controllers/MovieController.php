@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Genre;
 use App\Movie;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use DB;
 
@@ -12,7 +11,6 @@ class MovieController extends Controller
 {
     public function index()
     {
-
         return response()->json(Movie::all()->load('genres'));
     }
 
@@ -20,9 +18,10 @@ class MovieController extends Controller
     {
         DB::beginTransaction();
         try {
-            $movie = Movie::create($request->all());
+            $data = $this->validateData($request);
+            $movie = Movie::create($data);
 
-            $genres = Genre::whereIn('id', $request->get('genres'))->pluck('id')->toArray();
+            $genres = Genre::whereIn('id', array_get($data, 'genres'))->pluck('id')->toArray();
             $movie->genres()->syncWithoutDetaching(array_values($genres));
             DB::commit();
 
@@ -38,11 +37,12 @@ class MovieController extends Controller
     {
         DB::beginTransaction();
         try {
-            $movie->update($request->all());
+            $data = $this->validateData($request);
+            $movie->update($data);
 
-            $genres = Genre::whereIn('id', $request->get('genres'))->pluck('id')->toArray();
+            $genres = Genre::whereIn('id', array_get($data, 'genres'))->pluck('id')->toArray();
             $movie->genres()->sync($genres);
-            DB:commit();
+            DB::commit();
 
             return response()->json($movie->load('genres'), 200);
         } catch (\Exception $e) {
@@ -61,8 +61,16 @@ class MovieController extends Controller
 
     public function findByTitle(Request $request, string $title)
     {
-            $movie = Movie::where('title', 'LIKE', '%' . $title . '%')->with('genres')->get();
+        $movie = Movie::where('title', 'LIKE', '%' . $title . '%')->with('genres')->get();
 
-            return response()->json($movie, 200);
+        return response()->json($movie, 200);
+    }
+
+    private function validateData(Request $request)
+    {
+        return $request->validate([
+            'title' => ['required', 'max:255'],
+            'genres.*' => ['exists:genres,id']
+        ]);
     }
 }
